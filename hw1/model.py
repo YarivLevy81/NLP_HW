@@ -41,17 +41,20 @@ class WSDModel(nn.Module):
             Contextualized query and attention matrix / vector
         """
         Q_c = None
-        A = None        
+        A = None
         
-        # TODO Part 1: Your code here.
-        # Have a look at the difference between torch.matmul() and torch.bmm().
-        raise NotImplementedError()
+        A = torch.matmul(Q, self.W_A)
+        A = torch.bmm(A, X.transpose(1, 2))
 
         if self.use_padding:
             # TODO part 2: Your code here.
-            raise NotImplementedError()
+            A = A.masked_fill(mask.unsqueeze(1) == self.pad_id, -math.inf)
 
         # TODO Part 1: continue.
+        A = self.softmax(A)
+        
+        Q_c = torch.matmul(X, self.W_O)
+        Q_c = torch.bmm(A, Q_c)
 
         return Q_c, A.squeeze()
 
@@ -72,10 +75,15 @@ class WSDModel(nn.Module):
         if v_q is not None:
             # TODO Part 1: Your Code Here.
             # Look up the gather() and expand() methods in PyTorch.
-            raise NotImplementedError()
+            v_q = v_q.unsqueeze(1)
+            v_q = v_q.unsqueeze(1)
+            
+            v_q = v_q.expand(len(v_q), 1, self.D)
+            Q = torch.gather(X, 1, v_q)
+            
         else:
             # TODO Part 3: Your Code Here.
-            raise NotImplementedError()
+            Q = X
             
 
         mask = M_s.ne(self.pad_id)
