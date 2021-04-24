@@ -2,10 +2,11 @@ import torch
 from torch import nn
 import torch.nn.init as init
 import math
+import numpy as np
 
 class WSDModel(nn.Module):
 
-    def __init__(self, V, Y, D=300, dropout_prob=0.2, use_padding=False, pos_enc=None):
+    def __init__(self, V, Y, D=300, dropout_prob=0.2, use_padding=False, pos_enc=None, causal=False):
         super(WSDModel, self).__init__()
         self.use_padding = use_padding
 
@@ -25,6 +26,7 @@ class WSDModel(nn.Module):
         self.softmax = torch.nn.Softmax(dim=-1)
         self.layer_norm = nn.LayerNorm([self.D])
         self.pos_enc = pos_enc
+        self.causal = causal
 
     def attention(self, X, Q, mask):
         """
@@ -53,7 +55,11 @@ class WSDModel(nn.Module):
         if self.use_padding:
             # TODO part 2: Your code here.
             A = A.masked_fill(mask.unsqueeze(1) == self.pad_id, -math.inf)
-
+        
+        if self.causal:
+            A = A + torch.tensor(torch.triu(torch.full(A.shape, -1000), diagonal=0), device=A.device)
+        
+        A = A.float()
         # TODO Part 1: continue.
         A = self.softmax(A)
         
