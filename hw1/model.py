@@ -3,10 +3,9 @@ from torch import nn
 import torch.nn.init as init
 import math
 
-
 class WSDModel(nn.Module):
 
-    def __init__(self, V, Y, D=300, dropout_prob=0.2, use_padding=False):
+    def __init__(self, V, Y, D=300, dropout_prob=0.2, use_padding=False, pos_enc=None):
         super(WSDModel, self).__init__()
         self.use_padding = use_padding
 
@@ -25,6 +24,7 @@ class WSDModel(nn.Module):
         self.dropout_layer = nn.Dropout(p=dropout_prob)
         self.softmax = torch.nn.Softmax(dim=-1)
         self.layer_norm = nn.LayerNorm([self.D])
+        self.pos_enc = pos_enc
 
     def attention(self, X, Q, mask):
         """
@@ -46,6 +46,10 @@ class WSDModel(nn.Module):
         A = torch.matmul(Q, self.W_A)
         A = torch.bmm(A, X.transpose(1, 2))
 
+        if self.pos_enc is not None:
+            encoder = self.pos_enc(A.size(1))
+            A = encoder(A)
+        
         if self.use_padding:
             # TODO part 2: Your code here.
             A = A.masked_fill(mask.unsqueeze(1) == self.pad_id, -math.inf)
@@ -84,7 +88,6 @@ class WSDModel(nn.Module):
         else:
             # TODO Part 3: Your Code Here.
             Q = X
-            
 
         mask = M_s.ne(self.pad_id)
         Q_c, A = self.attention(X, Q, mask)
