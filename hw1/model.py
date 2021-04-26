@@ -57,7 +57,7 @@ class WSDModel(nn.Module):
             A = A.masked_fill(mask.unsqueeze(1) == self.pad_id, -math.inf)
         
         if self.causal:
-            A = A + torch.tensor(torch.triu(torch.full(A.shape, -1000), diagonal=0), device=A.device)
+            A = A + torch.tensor(torch.triu(torch.full(A.shape, -25000), diagonal=0), device=A.device)
         
         A = A.float()
         # TODO Part 1: continue.
